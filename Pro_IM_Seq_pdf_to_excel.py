@@ -1,8 +1,13 @@
 import pdfplumber
 import sys
 import os
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+# Streamlit 환경에서는 tkinter를 사용하지 않음
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox, ttk
+    TKINTER_AVAILABLE = True
+except ImportError:
+    TKINTER_AVAILABLE = False
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
@@ -78,6 +83,9 @@ class ProgressWindow:
     프로그래스바를 표시하는 GUI 클래스
     """
     def __init__(self):
+        if not TKINTER_AVAILABLE:
+            return
+        
         self.root = tk.Tk()
         self.root.title("PDF 처리 중...")
         
@@ -137,6 +145,9 @@ class ProgressWindow:
             value (int): 프로그래스 값 (0-100)
             status_text (str): 상태 텍스트
         """
+        if not TKINTER_AVAILABLE:
+            return
+        
         self.progress['value'] = value
         self.percent_label.config(text=f"{value}%")
         if status_text:
@@ -148,10 +159,16 @@ class ProgressWindow:
         
     def close(self):
         """프로그래스바 창 닫기"""
+        if not TKINTER_AVAILABLE:
+            return
+        
         self.root.destroy()
         
     def show(self):
         """프로그래스바 창 표시"""
+        if not TKINTER_AVAILABLE:
+            return
+        
         self.root.update()
 
 def extract_data_from_first_page(lines):
@@ -786,6 +803,9 @@ def select_save_location(pdf_filename):
     Returns:
         str: 선택된 저장 경로, 취소시 None
     """
+    if not TKINTER_AVAILABLE:
+        return None
+    
     # tkinter 윈도우 생성 (숨김)
     root = tk.Tk()
     root.withdraw()  # 메인 윈도우 숨기기
@@ -1015,6 +1035,9 @@ def select_pdf_file():
     Returns:
         str: 선택된 PDF 파일의 경로, 취소시 None
     """
+    if not TKINTER_AVAILABLE:
+        return None
+    
     # tkinter 윈도우 생성 (숨김)
     root = tk.Tk()
     root.withdraw()  # 메인 윈도우 숨기기
@@ -1171,3 +1194,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
