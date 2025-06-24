@@ -355,26 +355,22 @@ def extract_data_from_first_page(lines):
                 if next_parts:
                     unit = next_parts[0]
                     
+                    # E열(AU) 로직: 단위 다음 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                    au = ""
+                    
                     # 두번째 문장이 "NACL"인 경우 특수 처리
                     if len(next_parts) > 2 and next_parts[1] == "NACL":
-                        # NACL인 경우: 세번째 문장이 AU, 다섯번째 문장이 R.P Lot
-                        au = next_parts[2] if len(next_parts) > 2 else ""
-                        
-                        # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "Dil":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
-                        
-                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "VITDT":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
+                        # NACL인 경우: 세번째 단어 확인
+                        if len(next_parts) > 2:
+                            potential_au = next_parts[2]
+                            if "-" in potential_au:
+                                au = potential_au
+                            else:
+                                # 세번째 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                                for word in next_parts:
+                                    if "-" in word:
+                                        au = word
+                                        break
                         
                         rp_lot = ""
                         if len(next_parts) >= 6:  # 다섯번째 문장 (인덱스 4)
@@ -383,24 +379,17 @@ def extract_data_from_first_page(lines):
                             if potential_rp_lot.isdigit() or (potential_rp_lot.isalnum() and any(c.isdigit() for c in potential_rp_lot)):
                                 rp_lot = potential_rp_lot
                     else:
-                        # 일반적인 경우: 두번째 문장이 AU, 네번째 문장이 R.P Lot
-                        au = next_parts[1] if len(next_parts) > 1 else ""
-                        
-                        # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "Dil":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
-                        
-                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "VITDT":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
+                        # 일반적인 경우: 두번째 단어 확인
+                        if len(next_parts) > 1:
+                            potential_au = next_parts[1]
+                            if "-" in potential_au:
+                                au = potential_au
+                            else:
+                                # 두번째 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                                for word in next_parts:
+                                    if "-" in word:
+                                        au = word
+                                        break
                         
                         rp_lot = ""
                         if len(next_parts) >= 5 and len(next_parts) > 3:
@@ -614,26 +603,22 @@ def extract_data_from_other_pages(lines):
                 if next_parts:
                     unit = next_parts[0]
                     
+                    # E열(AU) 로직: 단위 다음 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                    au = ""
+                    
                     # 두번째 문장이 "NACL"인 경우 특수 처리
                     if len(next_parts) > 2 and next_parts[1] == "NACL":
-                        # NACL인 경우: 세번째 문장이 AU, 다섯번째 문장이 R.P Lot
-                        au = next_parts[2] if len(next_parts) > 2 else ""
-                        
-                        # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "Dil":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
-                        
-                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "VITDT":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
+                        # NACL인 경우: 세번째 단어 확인
+                        if len(next_parts) > 2:
+                            potential_au = next_parts[2]
+                            if "-" in potential_au:
+                                au = potential_au
+                            else:
+                                # 세번째 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                                for word in next_parts:
+                                    if "-" in word:
+                                        au = word
+                                        break
                         
                         rp_lot = ""
                         if len(next_parts) >= 6:  # 다섯번째 문장 (인덱스 4)
@@ -642,24 +627,17 @@ def extract_data_from_other_pages(lines):
                             if potential_rp_lot.isdigit() or (potential_rp_lot.isalnum() and any(c.isdigit() for c in potential_rp_lot)):
                                 rp_lot = potential_rp_lot
                     else:
-                        # 일반적인 경우: 두번째 문장이 AU, 네번째 문장이 R.P Lot
-                        au = next_parts[1] if len(next_parts) > 1 else ""
-                        
-                        # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "Dil":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
-                        
-                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
-                        if au == "VITDT":
-                            # 현재 줄에서 "-"가 포함된 단어 찾기
-                            for word in next_parts:
-                                if "-" in word:
-                                    au = word
-                                    break
+                        # 일반적인 경우: 두번째 단어 확인
+                        if len(next_parts) > 1:
+                            potential_au = next_parts[1]
+                            if "-" in potential_au:
+                                au = potential_au
+                            else:
+                                # 두번째 단어에 "-"가 없으면 같은 줄에서 "-" 포함된 단어 찾기
+                                for word in next_parts:
+                                    if "-" in word:
+                                        au = word
+                                        break
                         
                         rp_lot = ""
                         if len(next_parts) >= 5 and len(next_parts) > 3:
