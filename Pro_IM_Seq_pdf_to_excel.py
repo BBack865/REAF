@@ -336,6 +336,14 @@ def extract_data_from_first_page(lines):
                                     au = word
                                     break
                         
+                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
+                        if au == "VITDT":
+                            # 현재 줄에서 "-"가 포함된 단어 찾기
+                            for word in next_parts:
+                                if "-" in word:
+                                    au = word
+                                    break
+                        
                         rp_lot = ""
                         if len(next_parts) >= 6:  # 다섯번째 문장 (인덱스 4)
                             potential_rp_lot = next_parts[4]
@@ -348,6 +356,14 @@ def extract_data_from_first_page(lines):
                         
                         # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
                         if au == "Dil":
+                            # 현재 줄에서 "-"가 포함된 단어 찾기
+                            for word in next_parts:
+                                if "-" in word:
+                                    au = word
+                                    break
+                        
+                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
+                        if au == "VITDT":
                             # 현재 줄에서 "-"가 포함된 단어 찾기
                             for word in next_parts:
                                 if "-" in word:
@@ -579,6 +595,14 @@ def extract_data_from_other_pages(lines):
                                     au = word
                                     break
                         
+                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
+                        if au == "VITDT":
+                            # 현재 줄에서 "-"가 포함된 단어 찾기
+                            for word in next_parts:
+                                if "-" in word:
+                                    au = word
+                                    break
+                        
                         rp_lot = ""
                         if len(next_parts) >= 6:  # 다섯번째 문장 (인덱스 4)
                             potential_rp_lot = next_parts[4]
@@ -591,6 +615,14 @@ def extract_data_from_other_pages(lines):
                         
                         # "Dil" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
                         if au == "Dil":
+                            # 현재 줄에서 "-"가 포함된 단어 찾기
+                            for word in next_parts:
+                                if "-" in word:
+                                    au = word
+                                    break
+                        
+                        # "VITDT" 단어가 AU에 있는 경우, "-"가 포함된 단어로 대체
+                        if au == "VITDT":
                             # 현재 줄에서 "-"가 포함된 단어 찾기
                             for word in next_parts:
                                 if "-" in word:
@@ -1194,4 +1226,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
