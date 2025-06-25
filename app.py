@@ -164,13 +164,38 @@ if st.button("🔄 Start Conversion (변환 시작)"):
 # Secret button for RDKR user
 if st.session_state.logged_in and st.session_state.username == "RDKR":
     st.markdown("---")
+    st.subheader("비밀의 PDF 츄릅 기능")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        secret_pdf = st.file_uploader("Upload PDF File (츄릅용 PDF)", type=["pdf"], key="secret_pdf")
+    with col2:
+        secret_excel = st.file_uploader("Upload Excel File (츄릅용 Excel)", type=["xlsx", "xls"], key="secret_excel")
+
     if st.button("PDF 츄릅 실행하기"):
-        try:
-            secret_mod = importlib.import_module("secret")
-            importlib.reload(secret_mod)  # Ensure it runs every time
-            st.success("'secret.py'가 실행되었습니다! (츄릅~)")
-        except Exception as e:
-            st.error(f"secret.py 실행 중 오류 발생: {e}")
+        if secret_pdf and secret_excel:
+            with st.spinner("츄릅... 츄릅..."):
+                # Save uploaded files to temp files
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                    tmp_pdf.write(secret_pdf.getbuffer())
+                    secret_pdf_path = tmp_pdf.name
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_excel:
+                    tmp_excel.write(secret_excel.getbuffer())
+                    secret_excel_path = tmp_excel.name
+
+                try:
+                    secret_mod = importlib.import_module("secret")
+                    importlib.reload(secret_mod)  # Ensure it runs every time
+                    
+                    # Call the run function in secret.py
+                    secret_mod.run(secret_pdf_path, secret_excel_path)
+                    
+                    st.success("'secret.py'가 실행되었습니다! (츄릅~)")
+                except Exception as e:
+                    st.error(f"secret.py 실행 중 오류 발생: {e}")
+        else:
+            st.error("츄릅용 PDF와 Excel 파일을 모두 업로드해야 합니다.")
 
 # Sidebar version info
 st.sidebar.markdown("---")
