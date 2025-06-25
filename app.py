@@ -67,12 +67,35 @@ with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
     
     **⚠️ 주의사항:**
     - PDF 파일은 cobas Pro 장비에서 생성된 파일이어야 합니다
+    - **장비별로 PDF 파일을 분류해서 실행해야 합니다**
+    - **파일 크기가 클 경우, 데이터가 누락 될 수 있습니다**
     - 파일 크기가 클 경우 변환에 시간이 소요될 수 있습니다
     - 변환 완료 후 Excel 파일명을 지정할 수 있습니다
     
     **🔧 지원 장비:**
     - **cobas Pro CC**: Barcode/Sequence 모드 모두 지원
     - **cobas Pro IM**: Barcode/Sequence 모드 모두 지원
+    
+    ---
+    
+    **📋 How to Use:**
+    1. **Upload PDF File**: Select the PDF file to convert
+    2. **Select Analyzer**: Choose between cobas Pro CC or cobas Pro IM
+    3. **Select Mode**: 
+       - **Barcode mode**: Sample ID-based conversion
+       - **Sequence mode**: Sequence Number-based conversion
+    4. **Start Conversion**: Click the button to start conversion
+    
+    **⚠️ Important Notes:**
+    - PDF files must be generated from cobas Pro analyzers
+    - **PDF files must be classified and executed by analyzer type**
+    - **Large file sizes may cause data loss**
+    - Large files may take longer to convert
+    - You can specify the Excel filename after conversion
+    
+    **🔧 Supported Analyzers:**
+    - **cobas Pro CC**: Supports both Barcode/Sequence modes
+    - **cobas Pro IM**: Supports both Barcode/Sequence modes
     """)
 
 # PDF uploader
