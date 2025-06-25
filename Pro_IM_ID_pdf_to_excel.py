@@ -328,12 +328,9 @@ def extract_data_from_first_page(lines):
                 if is_numeric(word):
                     result = word.replace(',', '.')  # "4,12" -> "4.12"
                     
-                    # Result 뒤에 문자열이 있는지 확인 (Data Alarm)
+                    # Data Alarm 판정: Result 뒤에 추가 단어가 있으면 'Y'
                     if result_idx + 1 < len(parts):
-                        next_word = parts[result_idx + 1]
-                        # 숫자가 아닌 문자열이 있으면 Data Alarm
-                        if not is_numeric(next_word):
-                            data_alarm = "Y"
+                        data_alarm = "Y"
                     break
                 result_idx += 1
             
@@ -576,12 +573,9 @@ def extract_data_from_other_pages(lines):
                 if is_numeric(word):
                     result = word.replace(',', '.')  # "4,12" -> "4.12"
                     
-                    # Result 뒤에 문자열이 있는지 확인 (Data Alarm)
+                    # Data Alarm 판정: Result 뒤에 추가 단어가 있으면 'Y'
                     if result_idx + 1 < len(parts):
-                        next_word = parts[result_idx + 1]
-                        # 숫자가 아닌 문자열이 있으면 Data Alarm
-                        if not is_numeric(next_word):
-                            data_alarm = "Y"
+                        data_alarm = "Y"
                     break
                 result_idx += 1
             
