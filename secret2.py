@@ -4,6 +4,148 @@ import pdfplumber
 import os
 import re
 import numpy as np
+import fitz  # PyMuPDF
+
+def apply_changes_to_pdf(pdf_path, excel_path):
+    """
+    Modifies the PDF based on the '수정할 Result' column in the Excel file.
+    Returns a dictionary with status, message, and path to the modified file.
+    Enhanced to preserve original font, size, color, and background.
+    Also removes extra words after Result when Data Alarm is Y.
+    """
+    try:
+        excel_df = pd.read_excel(excel_path)
+        # Filter for rows that have a value in "수정할 Result"
+        mod_df = excel_df[pd.to_numeric(excel_df["수정할 Result"], errors='coerce').notnull()].copy()
+
+        if mod_df.empty:
+            return {"status": "warning", "message": "수정할 항목이 엑셀 파일에 없습니다.", "path": None}
+
+        doc = fitz.open(pdf_path)
+        
+        # Convert result columns to string for matching, handling potential float issues
+        mod_df['Result_str'] = mod_df['Result'].apply(lambda x: f"{x:.0f}" if isinstance(x, float) and x.is_integer() else str(x))
+        mod_df['수정할 Result_str'] = mod_df['수정할 Result'].apply(lambda x: f"{x:.0f}" if isinstance(x, float) and x.is_integer() else str(x))
+
+        for index, row in mod_df.iterrows():
+            page_num = int(row['페이지'])
+            line_num = int(row['줄'])  # For more precise error messages
+            old_result = row['Result_str']
+            new_result = row['수정할 Result_str']
+
+            page = doc.load_page(page_num - 1)  # fitz is 0-indexed
+
+            text_instances = page.search_for(old_result)
+            if not text_instances:
+                return {"status": "error", "message": f"오류: 페이지 {page_num}, 줄 {line_num} 근처에서 원본 값 '{old_result}'을(를) PDF에서 찾을 수 없습니다.", "path": None}
+
+            rect_to_replace = text_instances[0]
+            
+            # Extract text properties from the original text
+            font_info = None
+            text_color = (0, 0, 0)  # Default black
+            font_size = 8  # Default size
+            font_name = "helv"  # Default font
+            original_text_span = None
+            
+            # Find the specific text and extract its properties
+            for block in page.get_text("dict")["blocks"]:
+                if "lines" in block:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            span_rect = fitz.Rect(span["bbox"])
+                            # Check if this span overlaps with our target text
+                            if span_rect.intersects(rect_to_replace):
+                                if old_result in span["text"]:
+                                    font_size = span["size"]
+                                    font_name = span["font"]
+                                    text_color = span["color"]
+                                    font_info = span
+                                    original_text_span = span
+                                    break
+                        if font_info:
+                            break
+                if font_info:
+                    break
+            
+            # Convert color from integer to RGB tuple if needed
+            if isinstance(text_color, int):
+                # Convert integer color to RGB
+                r = (text_color >> 16) & 255
+                g = (text_color >> 8) & 255
+                b = text_color & 255
+                text_color = (r/255.0, g/255.0, b/255.0)
+            elif isinstance(text_color, (list, tuple)) and len(text_color) >= 3:
+                # Ensure color values are in 0-1 range
+                text_color = tuple(c/255.0 if c > 1 else c for c in text_color[:3])
+            
+            # Remove extra words with patterns like ">Test", "<Test.", "> Test", "< Test" etc.
+            # Look for text spans that contain these patterns on the same line as the Result
+            extended_rect = rect_to_replace
+            pattern = re.compile(r'[><]\s*\w+[.\s]*')  # Matches ">Test", "<Test.", "> Test", "< Test", etc.
+            
+            # Search for spans that contain the unwanted patterns on the same line
+            for block in page.get_text("dict")["blocks"]:
+                if "lines" in block:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            span_rect = fitz.Rect(span["bbox"])
+                            # Check if this span is on the same line (similar y-coordinates)
+                            if (abs(span_rect.y0 - rect_to_replace.y0) < 5 and 
+                                abs(span_rect.y1 - rect_to_replace.y1) < 5 and
+                                span_rect.x0 >= rect_to_replace.x0):  # To the right of result
+                                # Check if this span contains unwanted patterns
+                                if pattern.search(span["text"]):
+                                    # Extend the rectangle to cover the unwanted text
+                                    extended_rect = extended_rect.include_rect(span_rect)
+            
+            rect_to_replace = extended_rect
+
+            # Use redaction to transparently remove the old text (preserving background)
+            page.add_redact_annot(rect_to_replace, fill=None)  # No fill = transparent
+            page.apply_redactions()
+            
+            # Calculate text position for better alignment
+            # Use the bottom-left for proper text baseline positioning
+            text_point = fitz.Point(rect_to_replace.x0, rect_to_replace.y1 - 2)
+            
+            # Insert the new text with original formatting
+            try:
+                # Try to use SegoeUI font from Windows system fonts
+                segoeui_path = r"C:\Windows\Fonts\segoeui.ttf"
+                if os.path.exists(segoeui_path):
+                    page.insert_text(text_point,
+                                   new_result,
+                                   fontsize=font_size,
+                                   fontfile=segoeui_path,
+                                   color=text_color)
+                else:
+                    # If SegoeUI not found, use original font
+                    page.insert_text(text_point,
+                                   new_result,
+                                   fontsize=font_size,
+                                   fontname=font_name,
+                                   color=text_color)
+            except:
+                # Fallback to standard formatting if font insertion fails
+                page.insert_text(text_point,
+                               new_result,
+                               fontsize=font_size,
+                               fontname="helv",
+                               color=(0, 0, 0))
+
+        # Create a path for the temporary modified file
+        temp_dir = os.path.dirname(pdf_path)
+        output_pdf_path = os.path.join(temp_dir, f"modified_{os.path.basename(pdf_path)}")
+        
+        doc.save(output_pdf_path, garbage=4, deflate=True, clean=True)
+        doc.close()
+        
+        return {"status": "success", "message": "PDF 파일이 성공적으로 수정되었습니다. 아래 버튼을 눌러 다운로드하세요.", "path": output_pdf_path}
+
+    except Exception as e:
+        import traceback
+        return {"status": "error", "message": f"PDF 수정 중 심각한 오류 발생: {e}\n{traceback.format_exc()}", "path": None}
 
 def extract_data_for_validation(pdf_path):
     """PDF에서 검증을 위한 데이터를 추출합니다."""
