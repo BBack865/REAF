@@ -180,8 +180,8 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
                 try:
                     secret_mod = importlib.import_module("secret")
                     importlib.reload(secret_mod)
-                    # The second argument is ignored in secret.py, so pass None
-                    secret_mod.run(extract_pdf_path, None) 
+                    # Pass original filename as the second argument
+                    secret_mod.run(extract_pdf_path, extract_pdf.name) 
                 except Exception as e:
                     st.error(f"secret.py 실행 중 오류 발생: {e}")
         else:
@@ -193,13 +193,13 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
     st.markdown("##### 2. Excel 데이터로 PDF 수정 (츄릅)")
     col1, col2 = st.columns(2)
     with col1:
-        modify_excel = st.file_uploader("Upload Excel File (츄릅용 Excel 첨부하기, 수정할 값 입력 필수)", type=["xlsx", "xls"], key="modify_excel")
+        modify_excel = st.file_uploader("Upload Excel File (츄릅용 Excel 첨부하기, 수정 값 입력 필수)", type=["xlsx", "xls"], key="modify_excel")
     with col2:
         modify_pdf = st.file_uploader("Upload PDF File (츄릅할 PDF 첨부하기)", type=["pdf"], key="modify_pdf")
 
     if st.button("PDF 츄릅 하기"):
         if modify_excel and modify_pdf:
-            with st.spinner("PDF 츄릅 중..."):
+            with st.spinner("PDF와 Excel 파일 검증 중..."):
                 # Save uploaded files to temp files
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_excel:
                     tmp_excel.write(modify_excel.getbuffer())
@@ -208,6 +208,10 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
                     tmp_pdf.write(modify_pdf.getbuffer())
                     modify_pdf_path = tmp_pdf.name
+                
+                # Store paths in session state for later use
+                st.session_state['modify_pdf_path'] = modify_pdf_path
+                st.session_state['modify_excel_path'] = modify_excel_path
 
                 try:
                     secret2_mod = importlib.import_module("secret2")
@@ -220,7 +224,39 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
         else:
             st.error("수정용 Excel과 PDF 파일을 모두 업로드해야 합니다.")
 
+    # --- Confirmation UI --- 
+    if st.session_state.get('validation_passed', False):
+        st.info("츄릅 진행이 가능합니다!, 츄릅을 진행하시겠습니까?")
+        
+        yes_button_col, no_button_col, _ = st.columns([1, 1, 8])
+
+        with yes_button_col:
+            if st.button("✔️ 예", key="confirm_yes"):
+                pdf_path = st.session_state.get('modify_pdf_path')
+                excel_path = st.session_state.get('modify_excel_path')
+
+                if pdf_path and excel_path:
+                    st.success("츄릅을 시작합니다! (실제 수정 기능은 다음 단계에 구현됩니다.)")
+                    # In a future step, we would call the actual modification function here.
+                    # e.g., secret2_mod.apply_changes(pdf_path, excel_path)
+                else:
+                    st.error("파일 경로를 찾을 수 없어 츄릅을 진행할 수 없습니다. 다시 시도해주세요.")
+
+                # Clean up session state
+                for key in ['validation_passed', 'modify_pdf_path', 'modify_excel_path']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
+
+        with no_button_col:
+            if st.button("❌ 아니오", key="confirm_no"):
+                st.warning("츄릅이 취소되었습니다.")
+                # Clean up session state
+                for key in ['validation_passed', 'modify_pdf_path', 'modify_excel_path']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
+
 # Sidebar version info
 st.sidebar.markdown("---")
 st.sidebar.markdown("Version: 0.0.4 (버전: 0.0.4)")
-
