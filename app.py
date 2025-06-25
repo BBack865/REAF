@@ -165,38 +165,62 @@ if st.button("🔄 Start Conversion (변환 시작)"):
 if st.session_state.logged_in and st.session_state.username == "RDKR":
     st.markdown("---")
     st.subheader("비밀의 PDF 츄릅 기능")
+
+    # Part 1: Extract PDF to Excel
+    st.markdown("##### 1. PDF에서 Excel 데이터 추출")
+    extract_pdf = st.file_uploader("Upload PDF File (츄릅용 Excel로 추출할 PDF 첨부하기)", type=["pdf"], key="extract_pdf")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        secret_pdf = st.file_uploader("Upload PDF File (츄릅용 PDF)", type=["pdf"], key="secret_pdf")
-    with col2:
-        secret_excel = st.file_uploader("Upload Excel File (츄릅용 Excel)", type=["xlsx", "xls"], key="secret_excel")
-
-    if st.button("PDF 츄릅 실행하기"):
-        if secret_pdf and secret_excel:
-            with st.spinner("츄릅... 츄릅..."):
-                # Save uploaded files to temp files
+    if st.button("PDF 츄릅용 Excel 추출하기"):
+        if extract_pdf:
+            with st.spinner("Excel 추출 중..."):
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-                    tmp_pdf.write(secret_pdf.getbuffer())
-                    secret_pdf_path = tmp_pdf.name
+                    tmp_pdf.write(extract_pdf.getbuffer())
+                    extract_pdf_path = tmp_pdf.name
                 
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_excel:
-                    tmp_excel.write(secret_excel.getbuffer())
-                    secret_excel_path = tmp_excel.name
-
                 try:
                     secret_mod = importlib.import_module("secret")
-                    importlib.reload(secret_mod)  # Ensure it runs every time
-                    
-                    # Call the run function in secret.py
-                    secret_mod.run(secret_pdf_path, secret_excel_path)
-                    
-                    st.success("'secret.py'가 실행되었습니다! (츄릅~)")
+                    importlib.reload(secret_mod)
+                    # The second argument is ignored in secret.py, so pass None
+                    secret_mod.run(extract_pdf_path, None) 
                 except Exception as e:
                     st.error(f"secret.py 실행 중 오류 발생: {e}")
         else:
-            st.error("츄릅용 PDF와 Excel 파일을 모두 업로드해야 합니다.")
+            st.error("추출할 PDF 파일을 업로드해야 합니다.")
+
+    st.markdown("---")
+
+    # Part 2: Modify PDF with Excel
+    st.markdown("##### 2. Excel 데이터로 PDF 수정 (츄릅)")
+    col1, col2 = st.columns(2)
+    with col1:
+        modify_excel = st.file_uploader("Upload Excel File (츄릅용 Excel 첨부하기, 수정할 값 입력 필수)", type=["xlsx", "xls"], key="modify_excel")
+    with col2:
+        modify_pdf = st.file_uploader("Upload PDF File (츄릅할 PDF 첨부하기)", type=["pdf"], key="modify_pdf")
+
+    if st.button("PDF 츄릅 하기"):
+        if modify_excel and modify_pdf:
+            with st.spinner("PDF 츄릅 중..."):
+                # Save uploaded files to temp files
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_excel:
+                    tmp_excel.write(modify_excel.getbuffer())
+                    modify_excel_path = tmp_excel.name
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                    tmp_pdf.write(modify_pdf.getbuffer())
+                    modify_pdf_path = tmp_pdf.name
+
+                try:
+                    secret2_mod = importlib.import_module("secret2")
+                    importlib.reload(secret2_mod)
+                    secret2_mod.run(modify_pdf_path, modify_excel_path)
+                except ModuleNotFoundError:
+                    st.error("'secret2.py' 파일을 찾을 수 없습니다. 파일을 생성해주세요.")
+                except Exception as e:
+                    st.error(f"secret2.py 실행 중 오류 발생: {e}")
+        else:
+            st.error("수정용 Excel과 PDF 파일을 모두 업로드해야 합니다.")
 
 # Sidebar version info
 st.sidebar.markdown("---")
 st.sidebar.markdown("Version: 0.0.4 (버전: 0.0.4)")
+
