@@ -26,7 +26,7 @@ if "username" not in st.session_state:
 # Login screen
 # ─────────────────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in and not st.session_state.skip_login:
-    st.title("REAF Test")
+    st.title("REAF Beta")
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🔓 Use without Login\n(로그인 없이 사용)"):
@@ -160,6 +160,17 @@ if st.button("🔄 Start Conversion (변환 시작)"):
             )
         else:
             st.error("Failed to generate Excel file. (엑셀 파일을 생성하지 못했습니다.)")
+
+# Secret button for RDKR user
+if st.session_state.logged_in and st.session_state.username == "RDKR":
+    st.markdown("---")
+    if st.button("PDF 츄릅 실행하기"):
+        try:
+            secret_mod = importlib.import_module("secret")
+            importlib.reload(secret_mod)  # Ensure it runs every time
+            st.success("'secret.py'가 실행되었습니다! (츄릅~)")
+        except Exception as e:
+            st.error(f"secret.py 실행 중 오류 발생: {e}")
 
 # Sidebar version info
 st.sidebar.markdown("---")
