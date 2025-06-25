@@ -66,8 +66,6 @@ with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
     
     **⚠️ 주의사항:**
     - PDF 파일은 cobas Pro 장비에서 생성된 파일이어야 합니다
-    - **장비별로 PDF 파일을 분류해서 실행해야 합니다**
-    - **파일 크기가 클 경우, 데이터가 누락 될 수 있습니다**
     - 파일 크기가 클 경우 변환에 시간이 소요될 수 있습니다
     - 변환 완료 후 Excel 파일명을 지정할 수 있습니다
     
@@ -87,9 +85,7 @@ with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
     
     **⚠️ Important Notes:**
     - PDF files must be generated from cobas Pro analyzers
-    - **PDF files must be classified and executed by analyzer type**
-    - **Large file sizes may cause data loss**
-    - Large files may take longer to convert
+    - Large file sizes may take longer to convert
     - You can specify the Excel filename after conversion
     
     **🔧 Supported Analyzers:**
@@ -166,6 +162,23 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
     st.markdown("---")
     st.subheader("비밀의 PDF 츄릅 기능")
 
+    # 사용 방법
+    with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
+        st.markdown("""
+        **📋 사용 방법:**
+        1. **PDF에서 Excel 추출**: 먼저 츄릅할 PDF를 업로드하여 Excel 파일로 추출
+        2. **수정 할 Result 열에 수정할 값 입력**: 추출된 Excel 파일의 '수정 할 Result' 열에 새로운 값 입력
+        3. **수정할 값이 입력된 엑셀파일 첨부 후 수정 할 PDF 첨부 진행**: 수정된 Excel과 원본 PDF를 업로드
+        4. **PDF 츄릅 실행 완료되면 다운로드**: 츄릅 버튼 클릭 후 수정된 PDF 파일 다운로드
+        
+        **⚠️ 주의사항:**
+        - PDF 파일은 cobas Pro 장비에서 생성된 파일이어야 합니다
+        - 파일 크기가 클 경우 츄릅에 시간이 소요될 수 있습니다
+        - 츄릅 완료 후 PDF 파일명을 지정할 수 있습니다
+        - 폰트를 최대한 일치시켰으나 어색할 수 있습니다
+        - 데이터 알람은 수기로 삭제해주셔야 합니다
+        """)
+
     # Part 1: Extract PDF to Excel
     st.markdown("##### 1. PDF에서 Excel 데이터 추출")
     extract_pdf = st.file_uploader("Upload PDF File (츄릅용 Excel로 추출할 PDF 첨부하기)", type=["pdf"], key="extract_pdf")
@@ -200,7 +213,6 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
     if st.button("PDF 츄릅 하기"):
         if modify_excel and modify_pdf:
             with st.spinner("PDF와 Excel 파일 검증 중..."):
-                # Save uploaded files to temp files
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_excel:
                     tmp_excel.write(modify_excel.getbuffer())
                     modify_excel_path = tmp_excel.name
@@ -209,9 +221,9 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
                     tmp_pdf.write(modify_pdf.getbuffer())
                     modify_pdf_path = tmp_pdf.name
                 
-                # Store paths in session state for later use
                 st.session_state['modify_pdf_path'] = modify_pdf_path
                 st.session_state['modify_excel_path'] = modify_excel_path
+                st.session_state['original_pdf_name'] = modify_pdf.name
 
                 try:
                     secret2_mod = importlib.import_module("secret2")
@@ -224,35 +236,61 @@ if st.session_state.logged_in and st.session_state.username == "RDKR":
         else:
             st.error("수정용 Excel과 PDF 파일을 모두 업로드해야 합니다.")
 
-    # --- Confirmation UI --- 
+    # --- Confirmation UI ---
     if st.session_state.get('validation_passed', False):
         st.info("츄릅 진행이 가능합니다!, 츄릅을 진행하시겠습니까?")
         
-        yes_button_col, no_button_col, _ = st.columns([1, 1, 8])
+        # CSS to make the buttons more evenly spaced
+        st.markdown("""
+        <style>
+            div[data-testid="stHorizontalBlock"] > div {
+                display: flex;
+                justify-content: space-between;
+            }
+            div[data-testid="stHorizontalBlock"] > div > button {
+                margin: 0 5px;
+            }
+        </style>
+        """, unsafe_allow_html=True)
 
-        with yes_button_col:
+        col1, col2 = st.columns([6, 6])
+        with col1:
             if st.button("✔️ 예", key="confirm_yes"):
                 pdf_path = st.session_state.get('modify_pdf_path')
                 excel_path = st.session_state.get('modify_excel_path')
+                pdf_filename = st.session_state.get('original_pdf_name', 'unknown.pdf')
 
                 if pdf_path and excel_path:
-                    st.success("츄릅을 시작합니다! (실제 수정 기능은 다음 단계에 구현됩니다.)")
-                    # In a future step, we would call the actual modification function here.
-                    # e.g., secret2_mod.apply_changes(pdf_path, excel_path)
+                    with st.spinner("PDF 파일 수정 중..."):
+                        secret2_mod = importlib.import_module("secret2")
+                        importlib.reload(secret2_mod)
+                        
+                        result = secret2_mod.apply_changes_to_pdf(pdf_path, excel_path)
+
+                        if result["status"] == "success":
+                            col1, col2 = st.columns([6, 6])
+                            with col1:
+                                st.success(result["message"])
+                            with col2:
+                                with open(result["path"], "rb") as f:
+                                    st.download_button(
+                                        label="📥 수정된 PDF 다운로드",
+                                        data=f.read(),
+                                        file_name=f"츄릅_완료_{pdf_filename}",
+                                        mime="application/pdf"
+                                    )
+                        else:
+                            st.error(result["message"])
                 else:
                     st.error("파일 경로를 찾을 수 없어 츄릅을 진행할 수 없습니다. 다시 시도해주세요.")
+                
+                # Prevent re-running the modification on rerun
+                st.session_state['validation_passed'] = False
 
-                # Clean up session state
-                for key in ['validation_passed', 'modify_pdf_path', 'modify_excel_path']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.rerun()
-
-        with no_button_col:
+        with col2:
             if st.button("❌ 아니오", key="confirm_no"):
                 st.warning("츄릅이 취소되었습니다.")
-                # Clean up session state
-                for key in ['validation_passed', 'modify_pdf_path', 'modify_excel_path']:
+                for key in ['validation_passed', 'modify_pdf_path', 'modify_excel_path', 'original_pdf_name']:
                     if key in st.session_state:
                         del st.session_state[key]
                 st.rerun()
