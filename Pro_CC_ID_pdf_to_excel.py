@@ -242,7 +242,7 @@ def extract_data_from_first_page(lines):
                     if len(parts) >= 4:
                         test_name = f"{parts[1]} {parts[2]}"  # "ISE K"
                         result = parts[3]  # "4.5"
-                        data_alarm = "Y" if len(parts) >= 5 and parts[4] == "> Test" else "N"
+                        data_alarm = "Y" if len(parts) > 4 else "N"
                         rerun = "Y"
                         
                         current_row_data = {
@@ -257,7 +257,7 @@ def extract_data_from_first_page(lines):
                     if len(parts) >= 3:
                         test_name = f"{parts[0]} {parts[1]}"  # "ISE K"
                         result = parts[2]  # "4.5"
-                        data_alarm = "Y" if len(parts) >= 4 and "> Test" in " ".join(parts[3:]) else "N"
+                        data_alarm = "Y" if len(parts) > 3 else "N"
                         rerun = "N"
                         
                         current_row_data = {
@@ -269,10 +269,10 @@ def extract_data_from_first_page(lines):
                         }
             elif has_plus:
                 # "+ BILD2-D 0.627 > Test" 형태
-                if len(parts) >= 4:
+                if len(parts) >= 3:
                     test_name = parts[1]
                     result = parts[2]
-                    data_alarm = "Y" if len(parts) >= 4 and parts[3] == "> Test" else "N"
+                    data_alarm = "Y" if len(parts) > 3 else "N"
                     rerun = "Y"
                     
                     current_row_data = {
@@ -287,7 +287,7 @@ def extract_data_from_first_page(lines):
                 if len(parts) >= 2:
                     test_name = parts[0]
                     result = parts[1]
-                    data_alarm = "Y" if len(parts) >= 3 and "> Test" in " ".join(parts[2:]) else "N"
+                    data_alarm = "Y" if len(parts) > 2 else "N"
                     rerun = "N"
                     
                     current_row_data = {
@@ -419,7 +419,7 @@ def extract_data_from_other_pages(lines):
                     if len(parts) >= 4:
                         test_name = f"{parts[1]} {parts[2]}"  # "ISE K"
                         result = parts[3]  # "4.5"
-                        data_alarm = "Y" if len(parts) >= 5 and parts[4] == "> Test" else "N"
+                        data_alarm = "Y" if len(parts) > 4 else "N"
                         rerun = "Y"
                         
                         current_row_data = {
@@ -434,7 +434,7 @@ def extract_data_from_other_pages(lines):
                     if len(parts) >= 3:
                         test_name = f"{parts[0]} {parts[1]}"  # "ISE K"
                         result = parts[2]  # "4.5"
-                        data_alarm = "Y" if len(parts) >= 4 and "> Test" in " ".join(parts[3:]) else "N"
+                        data_alarm = "Y" if len(parts) > 3 else "N"
                         rerun = "N"
                         
                         current_row_data = {
@@ -446,10 +446,10 @@ def extract_data_from_other_pages(lines):
                         }
             elif has_plus:
                 # "+ CHOL2-I 178 > Test" 형태
-                if len(parts) >= 4:
+                if len(parts) >= 3:
                     test_name = parts[1]
                     result = parts[2]
-                    data_alarm = "Y" if len(parts) >= 4 and parts[3] == "> Test" else "N"
+                    data_alarm = "Y" if len(parts) > 3 else "N"
                     rerun = "Y"
                     
                     current_row_data = {
@@ -464,7 +464,7 @@ def extract_data_from_other_pages(lines):
                 if len(parts) >= 2:
                     test_name = parts[0]
                     result = parts[1]
-                    data_alarm = "Y" if len(parts) >= 3 and "> Test" in " ".join(parts[2:]) else "N"
+                    data_alarm = "Y" if len(parts) > 2 else "N"
                     rerun = "N"
                     
                     current_row_data = {
