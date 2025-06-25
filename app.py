@@ -54,6 +54,27 @@ else:
 # ─────────────────────────────────────────────────────────────────────────────
 st.subheader("📄 PDF to Excel Converter (PDF → Excel 변환 도구)")
 
+# Usage Tips section
+with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
+    st.markdown("""
+    **📋 사용 방법:**
+    1. **PDF 파일 업로드**: 변환할 PDF 파일을 선택하세요
+    2. **장비 선택**: cobas Pro CC 또는 cobas Pro IM 중 선택
+    3. **모드 선택**: 
+       - **Barcode mode**: Sample ID 기반 변환
+       - **Sequence mode**: Sequence Number 기반 변환
+    4. **변환 시작**: 버튼을 클릭하여 변환을 시작하세요
+    
+    **⚠️ 주의사항:**
+    - PDF 파일은 cobas Pro 장비에서 생성된 파일이어야 합니다
+    - 파일 크기가 클 경우 변환에 시간이 소요될 수 있습니다
+    - 변환 완료 후 Excel 파일명을 지정할 수 있습니다
+    
+    **🔧 지원 장비:**
+    - **cobas Pro CC**: Barcode/Sequence 모드 모두 지원
+    - **cobas Pro IM**: Barcode/Sequence 모드 모두 지원
+    """)
+
 # PDF uploader
 pdf_file = st.file_uploader("Upload PDF File (PDF 파일 업로드)", type=["pdf"])
 
