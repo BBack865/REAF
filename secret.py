@@ -67,12 +67,15 @@ def extract_all_data(pdf_path):
                         if next_parts and not re.match(r'^[A-Z][A-Z0-9-]*', next_parts[0]) and next_parts[0] not in ["ISE", "+", "R2", "R3"]:
                             unit = next_parts[0]
 
+                    # If Unit is blank, Data Alarm should also be blank
+                    final_data_alarm = data_alarm if unit else ""
+
                     all_extracted_data.append({
                         "페이지": page_num,
                         "줄": line_num,
                         "Result": result,
                         "Unit": unit,
-                        "Data Alarm": data_alarm,
+                        "Data Alarm": final_data_alarm,
                     })
     return all_extracted_data
 
@@ -111,6 +114,14 @@ def run(pdf_path, original_filename):
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Sheet1')
+            
+            # Get the worksheet object
+            worksheet = writer.sheets['Sheet1']
+
+            # Set column widths (approximate conversion from pixels)
+            # 96 pixels for column E, 111 pixels for column F
+            worksheet.column_dimensions['E'].width = 13.71 # 96 pixels
+            worksheet.column_dimensions['F'].width = 15.86 # 111 pixels
         
         data = output.getvalue()
 
