@@ -11,8 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Simple user credentials (username:password)
 USERS = {
-    "RDKR": "1234",
-    "user": "abcd"
+    "RDKR": "nakakojo",
 }
 
 # Initialize session state
@@ -102,7 +101,7 @@ with st.expander("💡 사용 팁 (Usage Tips)", expanded=False):
 pdf_file = st.file_uploader("Upload PDF File (PDF 파일 업로드)", type=["pdf"])
 
 # Analyzer and mode selection
-device = st.selectbox("Select Analyzer (장비 선택)", ["cobas Pro CC", "cobas Pro IM"])
+device = st.selectbox("Select Analyzer (장비 선택)", ["cobas Pro CC (c503, c703)", "cobas Pro IM (e801)"])
 mode_options = ["Barcode mode (Barcode 모드)", "Sequence mode (Sequence 모드)"]
 mode = st.selectbox("Select Mode (모드 선택)", mode_options)
 
@@ -118,10 +117,10 @@ if st.button("🔄 Start Conversion (변환 시작)"):
 
         # Map to module names (without file extension)
         module_map = {
-            ("cobas Pro CC", "Barcode mode (Barcode 모드)"):  "Pro_CC_ID_pdf_to_excel",
-            ("cobas Pro CC", "Sequence mode (Sequence 모드)"): "Pro_CC_Seq_pdf_to_excel",
-            ("cobas Pro IM", "Barcode mode (Barcode 모드)"):  "Pro_IM_ID_pdf_to_excel",
-            ("cobas Pro IM", "Sequence mode (Sequence 모드)"): "Pro_IM_Seq_pdf_to_excel",
+            ("cobas Pro CC (c503, c703)", "Barcode mode (Barcode 모드)"):  "Pro_CC_ID_pdf_to_excel",
+            ("cobas Pro CC (c503, c703)", "Sequence mode (Sequence 모드)"): "Pro_CC_Seq_pdf_to_excel",
+            ("cobas Pro IM (e801)", "Barcode mode (Barcode 모드)"):  "Pro_IM_ID_pdf_to_excel",
+            ("cobas Pro IM (e801)", "Sequence mode (Sequence 모드)"): "Pro_IM_Seq_pdf_to_excel",
         }
         mod_name = module_map.get((device, mode))
         if not mod_name:
