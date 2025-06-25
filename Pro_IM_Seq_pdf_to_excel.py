@@ -180,12 +180,13 @@ def extract_data_from_first_page(lines):
         lines (list): 페이지의 모든 줄들
         
     Returns:
-        tuple: (seq_no, date, extracted_data)
+        tuple: (base_seq_no, date, extracted_data, test_counter)
     """
-    seq_no = None
+    base_seq_no = None
     date = None
     extracted_data = []
     current_row_data = {}
+    test_counter = 0  # 테스트 순서 카운터 추가
     
     # 숫자형 변환 함수
     def convert_to_number(text):
@@ -205,7 +206,7 @@ def extract_data_from_first_page(lines):
         if "Ser/PI" in line_8 or "SerumPlasma" in line_8:
             parts = line_8.split()
             if len(parts) >= 2:
-                seq_no = parts[1]  # 두 번째 문단
+                base_seq_no = parts[1]  # 두 번째 문단을 기본 seq_no로 사용
                 # YYYY/MM/DD 형태의 날짜 찾기
                 for part in parts:
                     if re.match(r'\d{4}/\d{2}/\d{2}', part):
@@ -296,12 +297,9 @@ def extract_data_from_first_page(lines):
                 if is_numeric(word):
                     result = word.replace(',', '.')  # "4,12" -> "4.12"
                     
-                    # Result 뒤에 문자열이 있는지 확인 (Data Alarm)
+                    # Data Alarm 판정: Result 뒤에 추가 단어가 있으면 'Y'
                     if result_idx + 1 < len(parts):
-                        next_word = parts[result_idx + 1]
-                        # 숫자가 아닌 문자열이 있으면 Data Alarm
-                        if not is_numeric(next_word):
-                            data_alarm = "Y"
+                        data_alarm = "Y"
                     break
                 result_idx += 1
             
@@ -364,9 +362,22 @@ def extract_data_from_first_page(lines):
                                 else:
                                     r_nr_value = "Reac"
                     
+                    # 개별 순차 번호 생성
+                    test_counter += 1
+                    if base_seq_no:
+                        # 기본 seq_no에서 숫자 부분 추출하여 증가
+                        try:
+                            base_num = int(base_seq_no)
+                            individual_seq_no = f"{base_num + test_counter - 1:06d}"
+                        except ValueError:
+                            # 숫자가 아닌 경우 그대로 사용하고 카운터 추가
+                            individual_seq_no = f"{base_seq_no}-{test_counter}"
+                    else:
+                        individual_seq_no = f"{test_counter:06d}"
+                    
                     # 현재 행 데이터 완성
                     row_data = {
-                        'seq_no': seq_no,
+                        'seq_no': individual_seq_no,  # 개별 순차 번호 사용
                         'test_name': current_row_data.get('test_name', ''),
                         'result': current_row_data.get('result', ''),
                         'unit': unit,
@@ -383,23 +394,25 @@ def extract_data_from_first_page(lines):
         
         i += 1
     
-    return seq_no, date, extracted_data
+    return base_seq_no, date, extracted_data, test_counter
 
-def extract_data_from_other_pages(lines):
+def extract_data_from_other_pages(lines, global_test_counter=0):
     """
     두 번째 페이지부터의 특정 줄에서 데이터를 추출하는 함수
     5번째 줄에서 Seq No.와 Date 추출, 10번째 줄부터 30번째 줄까지 데이터 처리
     
     Args:
         lines (list): 페이지의 모든 줄들
+        global_test_counter (int): 전역 테스트 카운터 (페이지 간 연속성 유지)
         
     Returns:
-        tuple: (seq_no, date, extracted_data)
+        tuple: (base_seq_no, date, extracted_data, updated_counter)
     """
     extracted_data = []
     current_row_data = {}
-    seq_no = None
+    base_seq_no = None
     date = None
+    test_counter = global_test_counter  # 전역 카운터에서 시작
     
     # 5번째 줄에서 Seq No.와 Date 추출 (인덱스 4)
     if len(lines) > 4:
@@ -432,13 +445,13 @@ def extract_data_from_other_pages(lines):
                 
                 # Seq No. 완성 (공백으로 연결)
                 if seq_no_parts:
-                    seq_no = " ".join(seq_no_parts)
+                    base_seq_no = " ".join(seq_no_parts)
                     
             elif "Ser/PI" in line_5:
                 # Ser/PI 형태: Ser/PI 50016-1 2023/12/08 19:23:06
                 # 두번째 단어를 Seq No.로 추출 (기존 로직 유지)
                 if len(parts) >= 2:
-                    seq_no = parts[1]  # "Ser/PI" 다음 단어
+                    base_seq_no = parts[1]  # "Ser/PI" 다음 단어
             
             # 날짜는 같은 줄에서 YYYY/MM/DD 형태로 찾기
             for part in parts:
@@ -530,12 +543,9 @@ def extract_data_from_other_pages(lines):
                 if is_numeric(word):
                     result = word.replace(',', '.')  # "4,12" -> "4.12"
                     
-                    # Result 뒤에 문자열이 있는지 확인 (Data Alarm)
+                    # Data Alarm 판정: Result 뒤에 추가 단어가 있으면 'Y'
                     if result_idx + 1 < len(parts):
-                        next_word = parts[result_idx + 1]
-                        # 숫자가 아닌 문자열이 있으면 Data Alarm
-                        if not is_numeric(next_word):
-                            data_alarm = "Y"
+                        data_alarm = "Y"
                     break
                 result_idx += 1
             
@@ -598,9 +608,22 @@ def extract_data_from_other_pages(lines):
                                 else:
                                     r_nr_value = "Reac"
                     
+                    # 개별 순차 번호 생성
+                    test_counter += 1
+                    if base_seq_no:
+                        # 기본 seq_no에서 숫자 부분 추출하여 증가
+                        try:
+                            base_num = int(base_seq_no)
+                            individual_seq_no = f"{base_num + test_counter - 1:06d}"
+                        except ValueError:
+                            # 숫자가 아닌 경우 그대로 사용하고 카운터 추가
+                            individual_seq_no = f"{base_seq_no}-{test_counter}"
+                    else:
+                        individual_seq_no = f"{test_counter:06d}"
+                    
                     # 현재 행 데이터 완성
                     row_data = {
-                        'seq_no': seq_no,
+                        'seq_no': individual_seq_no,  # 개별 순차 번호 사용
                         'test_name': current_row_data.get('test_name', ''),
                         'result': current_row_data.get('result', ''),
                         'unit': unit,
@@ -617,7 +640,7 @@ def extract_data_from_other_pages(lines):
         
         i += 1
     
-    return seq_no, date, extracted_data
+    return base_seq_no, date, extracted_data, test_counter
 
 def create_excel_file(pdf_filename, extracted_data, output_path, terminal_logs=None, pdf_lines=None):
     """
@@ -881,8 +904,9 @@ def process_pdf_to_excel(pdf_path, progress_window=None):
             
             log_and_print(f"PDF 총 페이지 수: {total_pages}")
             all_extracted_data = []
-            seq_no = None
+            base_seq_no = None
             date = None
+            global_test_counter = 0  # 전역 테스트 카운터
             
             # 첫 번째 페이지 처리
             first_page = pdf.pages[0]
@@ -915,8 +939,9 @@ def process_pdf_to_excel(pdf_path, progress_window=None):
             log_and_print("=" * 50)
             
             # 첫 번째 페이지 데이터 추출
-            seq_no, date, first_page_data = extract_data_from_first_page(lines)
+            base_seq_no, date, first_page_data, test_counter = extract_data_from_first_page(lines)
             all_extracted_data.extend(first_page_data)
+            global_test_counter = test_counter
             
             if progress_window:
                 progress_window.update_progress(30, f"First page completed ({len(first_page_data)} data items)")
@@ -953,7 +978,7 @@ def process_pdf_to_excel(pdf_path, progress_window=None):
                         log_and_print(f"줄 {i:3d}: {line}")
                 
                 # 두 번째 페이지부터의 데이터 추출
-                page_seq_no, page_date, page_data = extract_data_from_other_pages(lines)
+                page_seq_no, page_date, page_data, global_test_counter = extract_data_from_other_pages(lines, global_test_counter)
                 all_extracted_data.extend(page_data)
                 
                 log_and_print(f"페이지 {page_num + 1}에서 추출된 데이터: {len(page_data)}개")
@@ -969,7 +994,7 @@ def process_pdf_to_excel(pdf_path, progress_window=None):
                 progress_window.update_progress(60, "Organizing data...")
             
             log_and_print(f"\n전체 추출된 데이터:")
-            log_and_print(f"Seq No.: {seq_no}")
+            log_and_print(f"Seq No.: {base_seq_no}")
             log_and_print(f"Date: {date}")
             log_and_print(f"총 데이터 개수: {len(all_extracted_data)}")
             
@@ -1091,9 +1116,10 @@ def run(pdf_path:str) -> str:
                 'lines': [line.strip() for line in lines if line.strip()]
             })
             
-            seq_no, date, extracted = extract_data_from_first_page(lines)
+            base_seq_no, date, extracted, test_counter = extract_data_from_first_page(lines)
 
             # 이후 페이지 추출
+            global_test_counter = test_counter  # 전역 테스트 카운터
             for i, page in enumerate(pdf.pages[1:], start=1):
                 lines = page.extract_text().split('\n')
                 
@@ -1103,7 +1129,7 @@ def run(pdf_path:str) -> str:
                     'lines': [line.strip() for line in lines if line.strip()]
                 })
                 
-                _, _, data = extract_data_from_other_pages(lines)
+                _, _, data, global_test_counter = extract_data_from_other_pages(lines, global_test_counter)
                 extracted.extend(data)
 
         if not extracted:
